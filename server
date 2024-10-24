@@ -1,0 +1,28 @@
+import java.io.*;
+import java.net.*;
+
+
+public class Server {
+    public static void main(String[] args) {
+        try {
+            int fact = 1;
+            System.out.println("Establishing Connection.....");
+            ServerSocket ss = new ServerSocket(6666);
+            Socket s = ss.accept();
+            System.out.println("Connection established");
+            DataInputStream dis =new DataInputStream(s.getInputStream());
+            String str =dis.readUTF();
+            int num=Integer.parseInt(str);
+            for(int i=1;i<=num;i++){
+                fact=fact*i;
+            }
+            System.out.println("factorial is"+fact);
+            dis.close();
+            s.close();
+            ss.close();
+        }catch (Exception e){
+            System.out.println("error"+e.getMessage());
+        }
+
+    }
+}
