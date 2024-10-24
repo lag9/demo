@@ -1,6 +1,6 @@
 Exp 2 Basic networking commands
 
-ping google.com
+Ping -c 4 google.com
 traceroute google.com   #It shows all intermediate routers the packet passes through.
 nslookup google.com   #this will return the IP address of the domain or the domain name for a given IP
 netstat -a    #The -a flag lists all active connections and listening ports.
@@ -39,8 +39,13 @@ sudo route del -net 192.168.2.0 netmask 255.255.255.0    #To delete the route
 sudo route del default    #Delete Existing Default Gateway
 sudo route add default gw 192.168.1.1    #add default gateway
 
+Part 3
 
-Part 3 not done
+Sudo iptables -L
+Sudo iptables -A INPUT -j DROP
+Sudo iptables -A INPUT -j ACCEPT
+Sudo iptables -A INPUT -j REJECT
+Sudo iptables -F
 
 
 Exp 6 socket programming
@@ -54,18 +59,6 @@ In client terminal: javac Client.java
 In Server terminal : javac Server.java
 In Server terminal : java Server
 In Client terminal : java Client
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 Exp 8 Telnet
@@ -93,11 +86,37 @@ Sudo gedit /etc/xinetd.config    #open this file
 Sudo etc /init.d/xinetd  restart    #restart xinetd
 Part 2 : test
 
-Telnet <ipaddr of target device >
+telnet <ipaddr of target device >
 ls    #list the files
 
 
+Exp 7 FTP
+Sudo apt install vsftpd
+Sudo nano /etc/vsftpd.config
+Uncomment : write enable yes (annonymus enable also yes)
+Sudo service vsftpd start
+Sudo ftp  <your ipadd>
+Bye  #exit
+Create a file (gedit filename.txt)
+Sudo ftp <your ip add>
+dir   #list directory
+mget filename.txt
+Yes (enter)
+mput filename.txt
+Yes (enter)
 
 
+Changes for telnet
 
+Sudo ufw enable
+Sudo ufw allow <port number>  #eg23
+
+
+Sudo adduser <username>
+Save password    #keep full name as blank
+Sudo visudo
+Search for( root ALL (ALL type thing  #scroll down
+Under root: add your user name and copy ALL wala thing down
+Sudo su <username>   # to change user
+Install telnet on both users
 
