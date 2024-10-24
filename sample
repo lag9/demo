@@ -1,0 +1,103 @@
+Exp 2 Basic networking commands
+
+ping google.com
+traceroute google.com   #It shows all intermediate routers the packet passes through.
+nslookup google.com   #this will return the IP address of the domain or the domain name for a given IP
+netstat -a    #The -a flag lists all active connections and listening ports.
+arp -a  #This shows the current ARP table of the system
+rarp -d [interface]   # It’s used to find the IP address when given a MAC address.
+ip addr show   #This will show all the IP addresses configured on your system
+Ifconfig  
+dig google.com   #It provides detailed information about DNS resolution
+route -n  #This shows the kernel’s IP routing table
+
+
+Exp4 Nmap
+
+Sudo apt-get install nmap
+nmap -sn 192.168.1.0/24    #This scans a range of IP addresses to find live hosts
+nmap 192.168.1.10   #This will find open ports on a specific IP address or domain.
+nmap -O 192.168.1.10   # detect the operating system, version, and services running on a host.
+nmap -p 80 192.168.1.10  #scan for a particular service like HTTP on a specific port
+
+
+Exp 5 Ip tables
+
+Part 1 Set Up Multiple IP Addresses on a Single LAN
+
+sudo ip addr add 192.168.1.100/24 dev <interface>
+ip addr show <interface>   #verify the addr
+sudo ifconfig <interface>:0 192.168.1.100 netmask 255.255.255.0    #Assigning IP addresses to the network interface
+ifconfig <interface>  # verify
+
+Part 2 Using netstat and route Commands
+
+netstat -rn	#display routing table
+netstat  -n 	#shows the kernel routing table, displaying destinations, gateways, interfaces, and other route information.
+sudo route add -net 192.168.2.0 netmask 255.255.255.0 gw 192.168.1.1	    #This adds a route to the 192.168.2.0/24 network via the gateway 192.168.1.1.
+sudo route del -net 192.168.2.0 netmask 255.255.255.0    #To delete the route
+sudo route del default    #Delete Existing Default Gateway
+sudo route add default gw 192.168.1.1    #add default gateway
+
+
+Part 3 not done
+
+
+Exp 6 socket programming
+Create Client and Socket file and save the files
+Go to program files ->java->jdk11->bins
+Copy path
+Go to the location where the java code is saved
+Open two terminals in the folder(1 for client and 1 for server)
+Write set path=’’ paste copied path here”;    #do this in both terminals
+In client terminal: javac Client.java
+In Server terminal : javac Server.java
+In Server terminal : java Server
+In Client terminal : java Client
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Exp 8 Telnet
+
+Part 1 : setup
+
+Sudo apt-get install xinetd telnetd
+Sudo gedit /etc/inetd.config   #this opens the gedit file
+telnet stream tcp nowait telnetd /usr/sbin/tcpd /usr/sbin/in.telnetd  #add this line to the file 
+Sudo gedit /etc/xinetd.config    #open this file
+
+
+
+#Add this there
+ defaluts
+{
+    log_on_success
+    instances=60
+    log_type=SYSLOG authpriv
+    log_on_success= HOST PID
+    log_on_failure=HOST
+    cps=25 30
+}
+
+Sudo etc /init.d/xinetd  restart    #restart xinetd
+Part 2 : test
+
+Telnet <ipaddr of target device >
+ls    #list the files
+
+
+
+
+
+
