@@ -1,68 +1,44 @@
 import java.io.*;
 import java.net.*;
 
-class Server {
+public class Server {
     public static void main(String[] args) {
         try {
-            // Create a server socket listening on port 6666
+            // Create server socket on port 6666
             ServerSocket ss = new ServerSocket(6666);
-            System.out.println("Server is listening...");
+            System.out.println("Server is waiting for a client...");
 
-            // Accept a connection from the client
+            // Accept client connection
             Socket s = ss.accept();
             System.out.println("Client connected!");
 
-            // Output stream for sending data to the client
-            DataOutputStream dos = new DataOutputStream(s.getOutputStream());
-            // Input stream for receiving data from the client
+            // Input and Output Streams
             DataInputStream dis = new DataInputStream(s.getInputStream());
+            DataOutputStream dos = new DataOutputStream(s.getOutputStream());
 
-            // Thread for receiving messages from the client
-            Thread receiveMessage = new Thread(() -> {
-                try {
-                    while (true) {
-                        // Read the message sent by the client
-                        String messageFromClient = dis.readUTF();
-                        System.out.println("Client: " + messageFromClient);
+            String clientMessage = "", serverResponse = "";
 
-                        // If client sends 'bye', exit
-                        if (messageFromClient.equalsIgnoreCase("bye")) {
-                            dos.writeUTF("bye"); // Send bye back to the client
-                            s.close();
-                            break;
-                        }
-                    }
-                } catch (Exception e) {
-                    System.out.println(e);
+            // Keep chatting until the client says 'bye'
+            while (!clientMessage.equalsIgnoreCase("bye")) {
+                clientMessage = dis.readUTF(); // Receive message from client
+                System.out.println("Client: " + clientMessage);
+
+                // Simple response logic
+                if (!clientMessage.equalsIgnoreCase("bye")) {
+                    serverResponse = "Hello, you said: " + clientMessage; // Predefined response
+                } else {
+                    serverResponse = "Goodbye!";
                 }
-            });
 
-            // Thread for sending messages to the client
-            
-	Thread sendMessage = new Thread(() -> {
-                try {
-                    while (true) {
-                        System.out.print("You: ");
-                        String message = sc.nextLine(); // Use nextLine() to read full input
+                dos.writeUTF(serverResponse); // Send response to client
+                dos.flush();
+            }
 
-                        // Send message to server
-                        dos.writeUTF(message);
-                        dos.flush(); // Ensure the message is sent immediately
-
-                        // If client types 'bye', close the connection
-                        if (message.equalsIgnoreCase("bye")) {
-                            socket.close(); // Close the socket before breaking
-                            break;
-                        }
-                    }
-                } catch (Exception e) {
-                    System.out.println(e);
-                }
-            });
-            // Start both threads
-            receiveMessage.start();
-            sendMessage.start();
-
+            // Close resources
+            dis.close();
+            dos.close();
+            s.close();
+            ss.close();
         } catch (Exception e) {
             System.out.println(e);
         }
