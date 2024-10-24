@@ -1,0 +1,70 @@
+import java.io.*;
+import java.net.*;
+
+class Server {
+    public static void main(String[] args) {
+        try {
+            // Create a server socket listening on port 6666
+            ServerSocket ss = new ServerSocket(6666);
+            System.out.println("Server is listening...");
+
+            // Accept a connection from the client
+            Socket s = ss.accept();
+            System.out.println("Client connected!");
+
+            // Output stream for sending data to the client
+            DataOutputStream dos = new DataOutputStream(s.getOutputStream());
+            // Input stream for receiving data from the client
+            DataInputStream dis = new DataInputStream(s.getInputStream());
+
+            // Thread for receiving messages from the client
+            Thread receiveMessage = new Thread(() -> {
+                try {
+                    while (true) {
+                        // Read the message sent by the client
+                        String messageFromClient = dis.readUTF();
+                        System.out.println("Client: " + messageFromClient);
+
+                        // If client sends 'bye', exit
+                        if (messageFromClient.equalsIgnoreCase("bye")) {
+                            dos.writeUTF("bye"); // Send bye back to the client
+                            s.close();
+                            break;
+                        }
+                    }
+                } catch (Exception e) {
+                    System.out.println(e);
+                }
+            });
+
+            // Thread for sending messages to the client
+            
+	Thread sendMessage = new Thread(() -> {
+                try {
+                    while (true) {
+                        System.out.print("You: ");
+                        String message = sc.nextLine(); // Use nextLine() to read full input
+
+                        // Send message to server
+                        dos.writeUTF(message);
+                        dos.flush(); // Ensure the message is sent immediately
+
+                        // If client types 'bye', close the connection
+                        if (message.equalsIgnoreCase("bye")) {
+                            socket.close(); // Close the socket before breaking
+                            break;
+                        }
+                    }
+                } catch (Exception e) {
+                    System.out.println(e);
+                }
+            });
+            // Start both threads
+            receiveMessage.start();
+            sendMessage.start();
+
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+}
