@@ -1,0 +1,70 @@
+import java.io.*;
+import java.net.*;
+import java.util.Scanner;
+
+class Client {
+
+    public static void main(String[] args) {
+        try {
+            // Establish connection with the server
+            Socket s = new Socket("localhost", 6666);
+            Scanner sc = new Scanner(System.in);
+
+            // Output stream for sending data to the server
+            DataOutputStream dos = new DataOutputStream(s.getOutputStream());
+            
+	   // Input stream for receiving data from the server
+            DataInputStream dis = new DataInputStream(s.getInputStream());
+
+            // Thread for sending messages to the server
+            Thread sm = new Thread(() -> {
+                try {
+                    while (true) {
+                        System.out.print("You: ");
+                        String message = sc.nextLine(); // Use nextLine() to read full input
+
+                        // Send message to server
+
+                        dos.writeUTF(message);
+                        dos.flush(); // Ensure the message is sent immediately
+
+                        // If client types 'bye', close the connection
+
+                        if (message.equalsIgnoreCase("bye")) {
+                            s.close(); // Close the socket before breaking
+                            break;
+                        }
+                    }
+                } catch (Exception e) {
+                    System.out.println(e);
+                }
+            });
+
+            // Thread for reading messages from the server
+            Thread readMessage = new Thread(() -> {
+                try {
+                    while (true) {
+                        // Read the message sent by the server
+                        String messageFromServer = dis.readUTF();
+                        System.out.println("Server: " + messageFromServer);
+
+                        // If server sends 'bye', exit
+                        if (messageFromServer.equalsIgnoreCase("bye")) {
+                            s.close(); // Close the socket before breaking
+                            break;
+                        }
+                    }
+                } catch (Exception e) {
+                    System.out.println(e);
+                }
+            });
+
+            // Start both threads
+            sm.start();
+            readMessage.start();
+
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+}
