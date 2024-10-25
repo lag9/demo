@@ -120,3 +120,25 @@ Under root: add your user name and copy ALL wala thing down
 Sudo su <username>   # to change user
 Install telnet on both users
 
+
+Telnet method 3
+1. sudo apt install telnetd xinetd
+2. sudo apt install nano
+3. sudo nano /etc/xinetd.d/telnet
+4. Paste the code:
+Code : 
+Service telnet
+{
+flags = REUSE
+socket_type = stream
+wait = no
+user = root
+server = /usr/bin/telnet
+logn_on_failure += USERID
+disable = no
+}
+Save & Close —> Ctrl S and Ctrl X
+5. sudo systemctl status xinetd (to check status)
+ sudo systemctl restart xinetd (to active)
+ sudo systemctl stop xinetd (to deactivate)
+6.telnet localhost
