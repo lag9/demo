@@ -83,7 +83,7 @@ Sudo gedit /etc/xinetd.config    #open this file
     cps=25 30
 }
 
-Sudo etc /init.d/xinetd  restart    #restart xinetd
+Sudo /etc/init.d/xinetd  restart    #restart xinetd
 Part 2 : test
 
 telnet <ipaddr of target device >
