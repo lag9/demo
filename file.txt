@@ -1,0 +1,439 @@
+# agglomerative
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Sample points
+points = np.array([
+    [1, 2], [1.5, 1.8], [5, 8],
+    [8, 8], [1, 0.6], [9, 11],
+    [8, 2], [10, 2], [9, 3]
+])
+
+# Euclidean distance
+def euclidean(a, b):
+    return np.sqrt(np.sum((a - b) ** 2))
+
+# Average linkage distance between clusters
+def average_linkage(c1, c2):
+    return np.min([euclidean(p1, p2) for p1 in c1 for p2 in c2])
+
+def average_linkage1(c1, c2):
+    total_dist = 0
+    count = 0
+    for p1 in c1:
+        for p2 in c2:
+            total_dist += euclidean(p1, p2)
+            count += 1
+    return total_dist / count if count > 0 else float('inf')
+
+# Start with each point as its own cluster
+clusters = [[p] for p in points]
+target_k = 2
+
+# Merge clusters until only `target_k` clusters remain
+while len(clusters) > target_k:
+    min_distance = float('inf')  # start with the largest possible number
+    closest_pair = (0, 1)        # just a placeholder
+
+    # Go through every pair of clusters
+    for i in range(len(clusters)):
+        for j in range(i + 1, len(clusters)):  # don't repeat pairs
+            # Get the two clusters
+            cluster1 = clusters[i]
+            cluster2 = clusters[j]
+            
+            # Calculate how far apart they are (average linkage)
+            dist = average_linkage(cluster1, cluster2)
+            
+            # If this pair is closer than our current best, update
+            if dist < min_distance:
+                min_distance = dist
+                closest_pair = (i, j)
+
+    # After the loop, we now know the best pair to merge:
+    i, j = closest_pair
+
+    clusters.append(clusters[i] + clusters[j])
+    clusters = [c for k, c in enumerate(clusters) if k not in (i, j)]
+
+# Plot results
+colors = ['r', 'b', 'g', 'c', 'm']
+
+for i in range(len(clusters)):
+    x = [p[0] for p in clusters[i]]
+    y = [p[1] for p in clusters[i]]
+    plt.scatter(x, y, color=colors[i], label=f'Cluster {i}')
+
+plt.title("Agglomerative Clustering (k=2)")
+plt.legend()
+plt.grid(True)
+plt.show()
+
+
+#apriori
+from itertools import combinations
+
+transactions = [
+    ['I1', 'I2', 'I5'],
+    ['I2', 'I4'],
+    ['I2', 'I3'],
+    ['I1', 'I2', 'I4'],
+    ['I1', 'I3'],   
+    ['I2', 'I3'],
+    ['I1', 'I3'],
+    ['I1', 'I2', 'I3', 'I5'],
+    ['I1', 'I2', 'I3'],
+]
+
+min_support_count = 2  
+
+# Function to calculate support count
+def get_support_count(itemset):
+    return sum(1 for t in transactions if set(itemset).issubset(t))
+
+# Function to generate candidate itemsets of size k from previous frequent itemsets
+def generate_candidates(prev_frequent, k):
+    candidates = set()
+    for i in range(len(prev_frequent)):
+        for j in range(i + 1, len(prev_frequent)):
+            candidate = sorted(set(prev_frequent[i]) | set(prev_frequent[j]))
+            if len(candidate) == k:
+                candidates.add(tuple(candidate))
+    return [list(c) for c in candidates]
+    
+# Apriori algorithm (modified to return only last L)
+def apriori_last_L(transactions, min_support_count):
+    items = sorted(set(item for t in transactions for item in t))
+    L = [[item] for item in items if get_support_count([item]) >= min_support_count]
+    
+    k = 2
+    last_L = L
+    while L:
+        Ck = generate_candidates(L, k)
+        L = [c for c in Ck if get_support_count(c) >= min_support_count]
+        if L:
+            last_L = L  # Update last frequent itemsets
+        k += 1
+    return last_L
+
+# Run and print only the last frequent itemsets
+last_frequent_itemsets = apriori_last_L(transactions, min_support_count)
+print("Last L (largest frequent itemsets):")
+for itemset in last_frequent_itemsets:
+    print(itemset)
+
+#decision tree classification
+import numpy as np
+import pandas as pd
+import math
+
+# Dataset
+df = pd.DataFrame({
+    'Outlook': ['Sunny', 'Sunny', 'Overcast', 'Rain', 'Rain', 'Rain', 'Overcast',
+                'Sunny', 'Sunny', 'Rain', 'Sunny', 'Overcast', 'Overcast', 'Rain'],
+    'Temperature': ['Hot', 'Hot', 'Hot', 'Mild', 'Cool', 'Cool', 'Cool',
+                    'Mild', 'Cool', 'Mild', 'Mild', 'Mild', 'Hot', 'Mild'],
+    'Humidity': ['High', 'High', 'High', 'High', 'Normal', 'Normal', 'Normal',
+                 'High', 'Normal', 'Normal', 'Normal', 'High', 'Normal', 'High'],
+    'Wind': ['Weak', 'Strong', 'Weak', 'Weak', 'Weak', 'Strong', 'Strong',
+             'Weak', 'Weak', 'Weak', 'Strong', 'Strong', 'Weak', 'Strong'],
+    'PlayTennis': ['No', 'No', 'Yes', 'Yes', 'Yes', 'No', 'Yes',
+                   'No', 'Yes', 'Yes', 'Yes', 'Yes', 'Yes', 'No']
+})
+
+# Entropy calculation
+def entropy(col):
+    vals, counts = np.unique(col, return_counts=True)
+    probs = counts / counts.sum()
+    return -np.sum(probs * np.log2(probs))
+
+# Information Gain
+def info_gain(data, feature, target='PlayTennis'):
+    total_entropy = entropy(data[target])
+    vals, counts = np.unique(data[feature], return_counts=True)
+    weighted = sum((counts[i]/counts.sum()) * entropy(data[data[feature]==vals[i]][target]) for i in range(len(vals)))
+    return total_entropy - weighted
+
+# ID3 Algorithm
+def ID3(data, features, target='PlayTennis'):
+    vals, counts = np.unique(data[target], return_counts=True)
+    if len(vals) == 1:
+        return vals[0]
+    if not features:
+        return vals[np.argmax(counts)]
+
+    gains = [info_gain(data, f, target) for f in features]
+    best = features[np.argmax(gains)]
+    tree = {best: {}}
+    
+    for val in np.unique(data[best]):
+        subset = data[data[best] == val]
+        sub_features = [f for f in features if f != best]
+        tree[best][val] = ID3(subset, sub_features, target)
+    
+    return tree
+
+# Prediction function
+def predict(tree, instance):
+    if not isinstance(tree, dict):
+        return tree  # Leaf node (final prediction)
+    
+    feature = list(tree.keys())[0]
+    value = instance[feature]
+    
+    if value in tree[feature]:
+        return predict(tree[feature][value], instance)
+    else:
+        return None  # In case the value is not found in the tree
+
+# Build tree
+features = list(df.columns[:-1])
+tree = ID3(df, features)
+
+# Example prediction (instance: 'Outlook' = 'Sunny', 'Temperature' = 'Hot', 'Humidity' = 'High', 'Wind' = 'Weak')
+instance = {'Outlook': 'Sunny', 'Temperature': 'Hot', 'Humidity': 'High', 'Wind': 'Weak'}
+prediction = predict(tree, instance)
+
+print("Generated Decision Tree:\n", tree)
+print(f"Prediction for {instance}: {prediction}")
+
+#discretization
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+data = pd.Series([15, 22, 37, 45, 18, 30, 60, 25, 40, 28, 50, 55, 65])
+num_bins = 4
+min_value = data.min()
+max_value = data.max()
+bin_width = (max_value - min_value) / num_bins
+bins = [min_value + i * bin_width for i in range(num_bins + 1)]
+labels = [f"Bin {i+1}" for i in range(num_bins)]
+discretized_data = pd.cut(data, bins=bins, labels=labels, include_lowest=True)
+print("Original Data:")
+print(data)
+print("\nDiscretized Data:")
+print(discretized_data)
+plt.figure(figsize=(10, 6))
+plt.hist(data, bins=10, edgecolor='black', alpha=0.7, label='Original Data')
+plt.title('Histogram of Original Data')
+plt.xlabel('Value')
+plt.ylabel('Frequency')
+for bin_edge in bins:
+plt.axvline(x=bin_edge, color='red', linestyle='--', label="Bin Edge")
+plt.legend()
+plt.show()
+
+# fp growth
+from collections import defaultdict, Counter
+
+# Sample transactions
+transactions = [
+    ['I1', 'I2', 'I5'],
+    ['I2', 'I4'],
+    ['I2', 'I3'],
+    ['I1', 'I2', 'I4'],
+    ['I1', 'I3'],
+    ['I2', 'I3'],
+    ['I1', 'I3'],
+    ['I1', 'I2', 'I3', 'I5'],
+    ['I1', 'I2', 'I3'],
+]
+
+min_support = 2
+
+# Step 1: Count item frequency
+item_counter = Counter()
+for t in transactions:
+    for item in t:
+        item_counter[item] += 1
+
+# Step 2: Filter infrequent items
+freq_items = {item for item, count in item_counter.items() if count >= min_support}
+
+# Step 3: Sort items in transactions by frequency
+def clean_sort(t):
+    return sorted([i for i in t if i in freq_items], key=lambda x: item_counter[x], reverse=True)
+
+transactions = [clean_sort(t) for t in transactions if clean_sort(t)]
+
+# Step 4: Define FP-Tree Node
+class TreeNode:
+    def __init__(self, name, count, parent):
+        self.name = name
+        self.count = count
+        self.parent = parent
+        self.children = defaultdict(lambda: None)
+
+    def increment(self, count):
+        self.count += count
+
+# Step 5: Build the FP-Tree
+def build_tree(transactions):
+    root = TreeNode('root', 1, None)
+    for t in transactions:
+        current_node = root
+        for item in t:
+            if item in current_node.children:
+                current_node.children[item].increment(1)
+            else:
+                current_node.children[item] = TreeNode(item, 1, current_node)
+            current_node = current_node.children[item]
+    return root
+
+# Step 6: Display tree (optional, for understanding)
+def display_tree(node, indent=0):
+    print('  ' * indent + f"{node.name} ({node.count})")
+    for child in node.children.values():
+        if child:
+            display_tree(child, indent + 1)
+
+# Build and show the FP-tree
+fp_tree = build_tree(transactions)
+display_tree(fp_tree)
+
+#kmeans 2d
+import numpy as np
+import matplotlib.pyplot as plt
+
+points = np.array([
+    [1, 2], [1.5, 1.8], [5, 8],
+    [8, 8], [1, 0.6], [9, 11],
+    [8, 2], [10, 2], [9, 3]
+])
+
+
+k = 2
+
+np.random.seed(42)
+centroids = points[np.random.choice(len(points), k, replace=False)]
+
+def euclidian(a,b):
+    return np.sqrt(np.sum((a-b)**2))
+
+prev_assignments = None
+for iteration in range(100):
+    clusters = [[] for _ in range(k)]
+    assignments = []
+
+    for point in points:
+        distances = [euclidian(point, centroid) for centroid in centroids]
+        cluster_index = np.argmin(distances)
+        clusters[cluster_index].append(point)
+        assignments.append(cluster_index)
+
+    assignments = np.array(assignments)
+
+    if prev_assignments is not None and np.all(assignments == prev_assignments):
+        print(f"Converged at iteration {iteration}")
+        break
+    prev_assignments= assignments
+
+    for i in range(k):
+        if clusters[i]:
+            centroids[i] = np.mean(clusters[i], axis=0)
+
+colors = ['r', 'b']
+for i in range(k):
+    cluster = np.array(clusters[i])
+    plt.scatter(cluster[:, 0], cluster[:, 1], c=colors[i], label=f'Cluster {i}')
+plt.scatter(centroids[:, 0], centroids[:, 1], s=200, c='yellow', marker='X', label='Centroids')
+plt.title("K-Means Clustering (2D)")
+plt.legend()
+plt.grid(True)
+plt.show()
+
+#linear regression 
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
+import matplotlib.pyplot as plt
+
+X = np.array([1, 2 , 3, 4, 5, 6, 7, 8, 9, 10]).reshape(-1, 1)
+y = np.array([2, 4, 6, 8, 10, 5, 14, 16, 18, 20])
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+y_pred = model.predict(X_test)
+
+mse = mean_squared_error(y_test, y_pred)
+print("Mean Squared Error:", mse)
+
+print("Input:", X_test[0])
+print("Predicted Output:", y_pred[0])
+
+plt.scatter(X_train, y_train, color='blue', label='Actual Data')
+plt.scatter(X_test, y_test, color='green', label='Test Data')
+plt.plot(X_test, y_pred, color='red', linewidth=2, label='Predicted Line')
+plt.xlabel('Input')
+plt.ylabel('Output')
+plt.legend()
+plt.show()
+
+#naive baysean 
+import pandas as pd
+
+data = {
+    'Age': ['Young', 'Young', 'Middle-aged', 'Senior', 'Senior', 'Senior', 'Middle-aged', 'Young', 'Young', 'Senior', 'Young', 'Middle-aged', 'Middle-aged', 'Senior'],
+    'Income': ['High', 'High', 'High', 'Medium', 'Low', 'Low', 'Low', 'Medium', 'Low', 'Medium', 'Medium', 'Medium', 'High', 'Medium'],
+    'Student': ['No', 'No', 'No', 'No', 'Yes', 'Yes', 'Yes', 'No', 'Yes', 'Yes', 'Yes', 'No', 'Yes', 'No'],
+    'Credit Rating': ['Fair', 'Excellent', 'Fair', 'Fair', 'Fair', 'Excellent', 'Excellent', 'Fair', 'Fair', 'Fair', 'Excellent', 'Excellent', 'Fair', 'Excellent'],
+    'Buys Computer': ['No', 'No', 'Yes', 'Yes', 'Yes', 'No', 'Yes', 'No', 'Yes', 'Yes', 'Yes', 'Yes', 'Yes', 'No']
+}
+
+df = pd.DataFrame(data)
+print(df.head())
+P_buys = df['Buys Computer'].value_counts(normalize=True)
+p_age = df['Age'].value_counts(normalize=True)print("maxiizing buys comp")
+p_buys_yes = P_buys['Yes']
+p_buys_no = P_buys['No']
+print("P(Yes):", p_buys_yes)
+print("P(No):", p_buys_no)
+print("maximizing age")
+
+p_age_young = p_age['Young']
+print("P(Young):", p_age_young)
+
+print("maximizing age")
+p_age_young_yes = len(df[(df['Age'] == 'Young') & (df['Buys Computer'] == 'Yes')]) / len(df[df['Buys Computer'] == 'Yes'])
+p_age_young_no = len(df[(df['Age'] == 'Young') & (df['Buys Computer'] == 'No')]) / len(df[df['Buys Computer'] == 'No'])
+
+print("P(Young|Yes):", p_age_young_yes)
+print("P(Young|No):", p_age_young_no)
+
+print("maximizing income")
+p_income_medium_yes = len(df[(df['Income'] == 'Medium') & (df['Buys Computer'] == 'Yes')]) / len(df[df['Buys Computer'] == 'Yes'])
+p_income_medium_no = len(df[(df['Income'] == 'Medium') & (df['Buys Computer'] == 'No')]) / len(df[df['Buys Computer'] == 'No'])
+print("P(Medium|Yes):", p_income_medium_yes)
+print("P(Medium|No):", p_income_medium_no)
+
+print("maximizing Student")
+p_student_yes_yes = len(df[(df['Student'] == 'Yes') & (df['Buys Computer'] == 'Yes')]) / len(df[df['Buys Computer'] == 'Yes'])
+p_student_yes_no = len(df[(df['Student'] == 'Yes') & (df['Buys Computer'] == 'No')]) / len(df[df['Buys Computer'] == 'No'])
+print("P(Student|Yes):", p_student_yes_yes)
+print("P(Student|No):", p_student_yes_no)
+
+print("maximizing Credit rating")
+p_credit_fair_yes = len(df[(df['Credit Rating'] == 'Fair') & (df['Buys Computer'] == 'Yes')]) / len(df[df['Buys Computer'] == 'Yes'])
+p_credit_fair_no = len(df[(df['Credit Rating'] == 'Fair') & (df['Buys Computer'] == 'No')]) / len(df[df['Buys Computer'] == 'No'])
+print("P(Student|Yes):", p_credit_fair_yes)
+print("P(Student|No):", p_credit_fair_no)
+
+print("Final Answer")
+p_x_buys_yes=p_age_young_yes * p_income_medium_yes * p_student_yes_yes * p_credit_fair_yes
+print("P(x|Buys):", p_x_buys_yes)
+p_x_buys_no=p_age_young_no * p_income_medium_no * p_student_yes_no * p_credit_fair_no
+print("P(x|Buys):", p_x_buys_no)
+
+p_x_buys = p_x_buys_yes * p_buys_yes
+p_x_notbuys = p_x_buys_no * p_buys_no
+print("P(x|Buys):", p_x_buys)
+print("P(x|NotBuys):", p_x_notbuys)
+
+if p_x_buys > p_x_notbuys:
+    print("The person will buy a computer.")
+else:
+    print("The person will not buy a computer.")
