@@ -1,73 +1,105 @@
 # agglomerative
-import numpy as np
-import matplotlib.pyplot as plt
+import math
+# Your provided data points
+points = [
+    (1, 2), (1.5, 1.8), (5, 8),
+    (8, 8), (1, 0.6), (9, 11),
+    (8, 2), (10, 2), (9, 3)
+]
 
-# Sample points
-points = np.array([
-    [1, 2], [1.5, 1.8], [5, 8],
-    [8, 8], [1, 0.6], [9, 11],
-    [8, 2], [10, 2], [9, 3]
-])
+# Function to compute Euclidean distance
+def euclidean(p1, p2):
+    return math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
 
-# Euclidean distance
-def euclidean(a, b):
-    return np.sqrt(np.sum((a - b) ** 2))
-
-# Average linkage distance between clusters
-def average_linkage(c1, c2):
-    return np.min([euclidean(p1, p2) for p1 in c1 for p2 in c2])
-
-def average_linkage1(c1, c2):
-    total_dist = 0
-    count = 0
-    for p1 in c1:
-        for p2 in c2:
-            total_dist += euclidean(p1, p2)
-            count += 1
-    return total_dist / count if count > 0 else float('inf')
-
-# Start with each point as its own cluster
+# Initialize each point as its own cluster
 clusters = [[p] for p in points]
-target_k = 2
+# Perform clustering
+step = 1
+while len(clusters) > 1:
+    min_dist = float('inf')
+    to_merge = (0, 0)
 
-# Merge clusters until only `target_k` clusters remain
-while len(clusters) > target_k:
-    min_distance = float('inf')  # start with the largest possible number
-    closest_pair = (0, 1)        # just a placeholder
-
-    # Go through every pair of clusters
+    # Find the closest pair of clusters (single linkage)
     for i in range(len(clusters)):
-        for j in range(i + 1, len(clusters)):  # don't repeat pairs
-            # Get the two clusters
-            cluster1 = clusters[i]
-            cluster2 = clusters[j]
-            
-            # Calculate how far apart they are (average linkage)
-            dist = average_linkage(cluster1, cluster2)
-            
-            # If this pair is closer than our current best, update
-            if dist < min_distance:
-                min_distance = dist
-                closest_pair = (i, j)
+        for j in range(i + 1, len(clusters)):
+            dist = min(euclidean(p1, p2) for p1 in clusters[i] for p2 in clusters[j])
+            #dist = sum(euclidean(p1, p2) for p1 in clusters[i] for p2 in clusters[j]) / (len(clusters[i]) * len(clusters[j]))
+            if dist < min_dist:
+                min_dist = dist
+                to_merge = (i, j)
 
-    # After the loop, we now know the best pair to merge:
-    i, j = closest_pair
+    # Merge the closest pair
+    i, j = to_merge
+    clusters[i].extend(clusters[j])
+    del clusters[j]
 
-    clusters.append(clusters[i] + clusters[j])
-    clusters = [c for k, c in enumerate(clusters) if k not in (i, j)]
+    # Print step-by-step merging
+    print(f"Step {step}: Merged clusters {to_merge} (distance: {min_dist:.2f}) — Remaining clusters: {len(clusters)}")
+    step += 1
 
-# Plot results
-colors = ['r', 'b', 'g', 'c', 'm']
+# Final cluster
+print("\nFinal cluster:", clusters[0])
 
-for i in range(len(clusters)):
-    x = [p[0] for p in clusters[i]]
-    y = [p[1] for p in clusters[i]]
-    plt.scatter(x, y, color=colors[i], label=f'Cluster {i}')
 
-plt.title("Agglomerative Clustering (k=2)")
-plt.legend()
-plt.grid(True)
+
+"""import math
+import matplotlib.pyplot as plt
+from scipy.cluster.hierarchy import dendrogram
+import numpy as np
+
+# Your data points
+points = [
+    (1, 2), (1.5, 1.8), (5, 8),
+    (8, 8), (1, 0.6), (9, 11),
+    (8, 2), (10, 2), (9, 3)
+]
+
+# Function to compute Euclidean distance
+def euclidean(p1, p2):
+    return math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
+
+# Initialize each point as its own cluster
+clusters = [[p] for p in points]
+cluster_ids = list(range(len(points)))
+merges = []
+current_cluster_id = len(points)
+
+# Perform clustering while recording merge steps
+while len(clusters) > 1:
+    min_dist = float('inf')
+    to_merge = (0, 0)
+
+    for i in range(len(clusters)):
+        for j in range(i + 1, len(clusters)):
+            dist = min(euclidean(p1, p2) for p1 in clusters[i] for p2 in clusters[j])
+
+            if dist < min_dist:
+                min_dist = dist
+                to_merge = (i, j)
+
+    i, j = to_merge
+    clusters[i].extend(clusters[j])
+
+    # Record merge: cluster1, cluster2, distance, new_cluster_size
+    merges.append([cluster_ids[i], cluster_ids[j], min_dist, len(clusters[i])])
+    del clusters[j]
+    del cluster_ids[j]
+
+    cluster_ids[i] = current_cluster_id
+    current_cluster_id += 1
+
+# Convert merge list to numpy array
+linkage_matrix = np.array(merges)
+
+# Plot dendrogram
+plt.figure(figsize=(10, 5))
+dendrogram(linkage_matrix, labels=range(1, len(points)+1))
+plt.title("Custom Agglomerative Clustering Dendrogram (Single Linkage)")
+plt.xlabel("Data Point Index")
+plt.ylabel("Euclidean Distance")
 plt.show()
+"""
+
 
 
 #apriori
@@ -89,38 +121,29 @@ min_support_count = 2
 
 # Function to calculate support count
 def get_support_count(itemset):
-    return sum(1 for t in transactions if set(itemset).issubset(t))
+    return sum(set(itemset).issubset(t) for t in transactions)
 
-# Function to generate candidate itemsets of size k from previous frequent itemsets
-def generate_candidates(prev_frequent, k):
-    candidates = set()
-    for i in range(len(prev_frequent)):
-        for j in range(i + 1, len(prev_frequent)):
-            candidate = sorted(set(prev_frequent[i]) | set(prev_frequent[j]))
-            if len(candidate) == k:
-                candidates.add(tuple(candidate))
-    return [list(c) for c in candidates]
-    
-# Apriori algorithm (modified to return only last L)
+# Apriori algorithm (returns only last frequent itemsets)
 def apriori_last_L(transactions, min_support_count):
-    items = sorted(set(item for t in transactions for item in t))
+    items = sorted({item for t in transactions for item in t})
     L = [[item] for item in items if get_support_count([item]) >= min_support_count]
+    last_L = L
     
     k = 2
-    last_L = L
     while L:
-        Ck = generate_candidates(L, k)
-        L = [c for c in Ck if get_support_count(c) >= min_support_count]
+        candidates = [list(c) for c in combinations({i for l in L for i in l}, k)]
+        L = [c for c in candidates if get_support_count(c) >= min_support_count]
         if L:
-            last_L = L  # Update last frequent itemsets
+            last_L = L
         k += 1
     return last_L
 
-# Run and print only the last frequent itemsets
+# Run and print result
 last_frequent_itemsets = apriori_last_L(transactions, min_support_count)
 print("Last L (largest frequent itemsets):")
 for itemset in last_frequent_itemsets:
     print(itemset)
+
 
 #decision tree classification
 import numpy as np
@@ -301,41 +324,29 @@ points = np.array([
     [8, 2], [10, 2], [9, 3]
 ])
 
-
 k = 2
-
 np.random.seed(42)
 centroids = points[np.random.choice(len(points), k, replace=False)]
 
-def euclidian(a,b):
+def euclidean(a, b):
     return np.sqrt(np.sum((a-b)**2))
 
-prev_assignments = None
-for iteration in range(100):
-    clusters = [[] for _ in range(k)]
-    assignments = []
+for _ in range(100):
+    distances = np.array([[euclidean(p, c) for c in centroids] for p in points])
+    labels = np.argmin(distances, axis=1)
 
-    for point in points:
-        distances = [euclidian(point, centroid) for centroid in centroids]
-        cluster_index = np.argmin(distances)
-        clusters[cluster_index].append(point)
-        assignments.append(cluster_index)
+    new_centroids = np.array([points[labels == i].mean(axis=0) for i in range(k)])
 
-    assignments = np.array(assignments)
-
-    if prev_assignments is not None and np.all(assignments == prev_assignments):
-        print(f"Converged at iteration {iteration}")
+    if np.all(centroids == new_centroids):
         break
-    prev_assignments= assignments
+    centroids = new_centroids
 
-    for i in range(k):
-        if clusters[i]:
-            centroids[i] = np.mean(clusters[i], axis=0)
-
+# Plot
 colors = ['r', 'b']
 for i in range(k):
-    cluster = np.array(clusters[i])
-    plt.scatter(cluster[:, 0], cluster[:, 1], c=colors[i], label=f'Cluster {i}')
+    cluster_points = points[labels == i]
+    plt.scatter(cluster_points[:, 0], cluster_points[:, 1], c=colors[i], label=f'Cluster {i+1}')
+
 plt.scatter(centroids[:, 0], centroids[:, 1], s=200, c='yellow', marker='X', label='Centroids')
 plt.title("K-Means Clustering (2D)")
 plt.legend()
@@ -344,34 +355,37 @@ plt.show()
 
 #linear regression 
 import numpy as np
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as plt
 
-X = np.array([1, 2 , 3, 4, 5, 6, 7, 8, 9, 10]).reshape(-1, 1)
-y = np.array([2, 4, 6, 8, 10, 5, 14, 16, 18, 20])
+# Sample data (x: input, y: output)
+x = np.array([1, 2, 3, 4, 5])
+y = np.array([2, 4, 5, 4, 5])
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# Mean values
+x_mean = np.mean(x)
+y_mean = np.mean(y)
 
-model = LinearRegression()
-model.fit(X_train, y_train)
+# Calculating coefficients
+numerator = np.sum((x - x_mean) * (y - y_mean))
+denominator = np.sum((x - x_mean) ** 2)
+slope = numerator / denominator
+intercept = y_mean - slope * x_mean
 
-y_pred = model.predict(X_test)
+print(f"Line Equation: y = {slope:.2f}x + {intercept:.2f}")
 
-mse = mean_squared_error(y_test, y_pred)
-print("Mean Squared Error:", mse)
+# Predictions
+y_pred = slope * x + intercept
 
-print("Input:", X_test[0])
-print("Predicted Output:", y_pred[0])
-
-plt.scatter(X_train, y_train, color='blue', label='Actual Data')
-plt.scatter(X_test, y_test, color='green', label='Test Data')
-plt.plot(X_test, y_pred, color='red', linewidth=2, label='Predicted Line')
-plt.xlabel('Input')
-plt.ylabel('Output')
+# Plotting
+plt.scatter(x, y, color='blue', label='Actual')
+plt.plot(x, y_pred, color='red', label='Regression Line')
 plt.legend()
+plt.xlabel("x")
+plt.ylabel("y")
+plt.title("Linear Regression")
+plt.grid(True)
 plt.show()
+
 
 #naive baysean 
 import pandas as pd
