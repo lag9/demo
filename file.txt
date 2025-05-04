@@ -318,40 +318,35 @@ display_tree(fp_tree)
 import numpy as np
 import matplotlib.pyplot as plt
 
-points = np.array([
-    [1, 2], [1.5, 1.8], [5, 8],
-    [8, 8], [1, 0.6], [9, 11],
-    [8, 2], [10, 2], [9, 3]
-])
+# Sample 2D data points
+points = np.array([[2, 3], [3, 4], [8, 7], [9, 6]])
+centroids = np.array([[2, 3], [8, 7]])
 
-k = 2
-np.random.seed(42)
-centroids = points[np.random.choice(len(points), k, replace=False)]
+def euclidean(p1, p2):
+    return np.sqrt(np.sum((p1[0] - p2[0]) ** 2) + ((p1[1] - p2[1])) ** 2)
 
-def euclidean(a, b):
-    return np.sqrt(np.sum((a-b)**2))
+# K-means iterations
+for _ in range(10):
+    labels = np.array([np.argmin([euclidean(p, c) for c in centroids]) for p in points])
+    centroids = np.array([points[labels == i].mean(axis=0) for i in range(2)])
 
-for _ in range(100):
-    distances = np.array([[euclidean(p, c) for c in centroids] for p in points])
-    labels = np.argmin(distances, axis=1)
+# Separate points by clusters
+cluster_0 = points[labels == 0]
+cluster_1 = points[labels == 1]
 
-    new_centroids = np.array([points[labels == i].mean(axis=0) for i in range(k)])
+# Plot clusters
+plt.scatter(cluster_0[:, 0], cluster_0[:, 1], color='blue', label='Cluster 0')
+plt.scatter(cluster_1[:, 0], cluster_1[:, 1], color='red', label='Cluster 1')
 
-    if np.all(centroids == new_centroids):
-        break
-    centroids = new_centroids
+# Plot centroids
+plt.scatter(centroids[:, 0], centroids[:, 1], color='black', marker='x', s=100, label='Centroids')
 
-# Plot
-colors = ['r', 'b']
-for i in range(k):
-    cluster_points = points[labels == i]
-    plt.scatter(cluster_points[:, 0], cluster_points[:, 1], c=colors[i], label=f'Cluster {i+1}')
-
-plt.scatter(centroids[:, 0], centroids[:, 1], s=200, c='yellow', marker='X', label='Centroids')
-plt.title("K-Means Clustering (2D)")
 plt.legend()
-plt.grid(True)
+plt.xlabel("X-axis")
+plt.ylabel("Y-axis")
+plt.title("K-Means Clustering (2 Clusters)")
 plt.show()
+
 
 #linear regression 
 import numpy as np
