@@ -1,448 +1,200 @@
-# agglomerative
-import math
-# Your provided data points
-points = [
-    (1, 2), (1.5, 1.8), (5, 8),
-    (8, 8), (1, 0.6), (9, 11),
-    (8, 2), (10, 2), (9, 3)
-]
+#dfs bfs
 
-# Function to compute Euclidean distance
-def euclidean(p1, p2):
-    return math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
+graph = {
+    '1': ['2', '14'],
+    '2': [],
+    '14': ['12', '5'],
+    '12': [],
+    '5': ['4'],
+    '4': []
+}
 
-# Initialize each point as its own cluster
-clusters = [[p] for p in points]
-# Perform clustering
-step = 1
-while len(clusters) > 1:
-    min_dist = float('inf')
-    to_merge = (0, 0)
+visited = []
+a = []
+def bfs(graph, visited, node):
+    visited.append(node)
+    a.append(node)
 
-    # Find the closest pair of clusters (single linkage)
-    for i in range(len(clusters)):
-        for j in range(i + 1, len(clusters)):
-            dist = min(euclidean(p1, p2) for p1 in clusters[i] for p2 in clusters[j])
-            #dist = sum(euclidean(p1, p2) for p1 in clusters[i] for p2 in clusters[j]) / (len(clusters[i]) * len(clusters[j]))
-            if dist < min_dist:
-                min_dist = dist
-                to_merge = (i, j)
+    while a:
+        e = a.pop(0)
+        print(e,end=" ")
 
-    # Merge the closest pair
-    i, j = to_merge
-    clusters[i].extend(clusters[j])
-    del clusters[j]
-
-    # Print step-by-step merging
-    print(f"Step {step}: Merged clusters {to_merge} (distance: {min_dist:.2f}) — Remaining clusters: {len(clusters)}")
-    step += 1
-
-# Final cluster
-print("\nFinal cluster:", clusters[0])
+        for i in graph[e]:
+            if i not in visited:
+                visited.append(i)
+                a.append(i)
 
 
+bfs(graph, visited, '1')
 
-"""import math
-import matplotlib.pyplot as plt
-from scipy.cluster.hierarchy import dendrogram
-import numpy as np
+"""
+graph = {
+    '1':['2','3'],
+    '2':['4'],
+    '4':['5'],
+    '5':[],
+    '3':['6','7'],
+    '6':[],
+    '7':[]
+}
 
-# Your data points
-points = [
-    (1, 2), (1.5, 1.8), (5, 8),
-    (8, 8), (1, 0.6), (9, 11),
-    (8, 2), (10, 2), (9, 3)
-]
+visited = []
 
-# Function to compute Euclidean distance
-def euclidean(p1, p2):
-    return math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
+def dfs(visited, graph, node):
+    if node not in visited:
+        print (node)
+        visited.append(node)
+        for i in graph[node]:
+            dfs(visited, graph, i)
 
-# Initialize each point as its own cluster
-clusters = [[p] for p in points]
-cluster_ids = list(range(len(points)))
-merges = []
-current_cluster_id = len(points)
 
-# Perform clustering while recording merge steps
-while len(clusters) > 1:
-    min_dist = float('inf')
-    to_merge = (0, 0)
-
-    for i in range(len(clusters)):
-        for j in range(i + 1, len(clusters)):
-            dist = min(euclidean(p1, p2) for p1 in clusters[i] for p2 in clusters[j])
-
-            if dist < min_dist:
-                min_dist = dist
-                to_merge = (i, j)
-
-    i, j = to_merge
-    clusters[i].extend(clusters[j])
-
-    # Record merge: cluster1, cluster2, distance, new_cluster_size
-    merges.append([cluster_ids[i], cluster_ids[j], min_dist, len(clusters[i])])
-    del clusters[j]
-    del cluster_ids[j]
-
-    cluster_ids[i] = current_cluster_id
-    current_cluster_id += 1
-
-# Convert merge list to numpy array
-linkage_matrix = np.array(merges)
-
-# Plot dendrogram
-plt.figure(figsize=(10, 5))
-dendrogram(linkage_matrix, labels=range(1, len(points)+1))
-plt.title("Custom Agglomerative Clustering Dendrogram (Single Linkage)")
-plt.xlabel("Data Point Index")
-plt.ylabel("Euclidean Distance")
-plt.show()
+dfs(visited, graph, '1')
 """
 
+#mp xor
+def NOT(x):
+    return 1 if x == 0 else 0
 
+def AND(x1, x2):
+    return 1 if x1 == 1 and x2 == 1 else 0
 
-#apriori
-from itertools import combinations
+def OR(x1, x2):
+    return 1 if x1 == 1 or x2 == 1 else 0
 
-transactions = [
-    ['I1', 'I2', 'I5'],
-    ['I2', 'I4'],
-    ['I2', 'I3'],
-    ['I1', 'I2', 'I4'],
-    ['I1', 'I3'],   
-    ['I2', 'I3'],
-    ['I1', 'I3'],
-    ['I1', 'I2', 'I3', 'I5'],
-    ['I1', 'I2', 'I3'],
-]
+def XOR(x1, x2):
+    # function1: z1 = x1 AND NOT x2
+    z1 = AND(x1, NOT(x2))
+    # function2: z2 = NOT x1 AND x2
+    z2 = AND(NOT(x1), x2)
+    # function3: y = z1 OR z2
+    y = OR(z1, z2)
+    return y
 
-min_support_count = 2  
+# Test XOR
+print("XOR Truth Table")
+for x1 in [0, 1]:
+    for x2 in [0, 1]:
+        print(f"{x1} XOR {x2} = {XOR(x1, x2)}")
 
-# Function to calculate support count
-def get_support_count(itemset):
-    return sum(set(itemset).issubset(t) for t in transactions)
+#perceptron
+import matplotlib.pyplot as plt
 
-# Apriori algorithm (returns only last frequent itemsets)
-def apriori_last_L(transactions, min_support_count):
-    items = sorted({item for t in transactions for item in t})
-    L = [[item] for item in items if get_support_count([item]) >= min_support_count]
-    last_L = L
-    
-    k = 2
-    while L:
-        candidates = [list(c) for c in combinations({i for l in L for i in l}, k)]
-        L = [c for c in candidates if get_support_count(c) >= min_support_count]
-        if L:
-            last_L = L
-        k += 1
-    return last_L
+# Input patterns
+x1 = [1, 1, -1, -1]
+x2 = [1, -1, 1, -1]
+t = [1, 1, 1, -1]
 
-# Run and print result
-last_frequent_itemsets = apriori_last_L(transactions, min_support_count)
-print("Last L (largest frequent itemsets):")
-for itemset in last_frequent_itemsets:
-    print(itemset)
+# Initial weights and bias
+w1, w2, b = 0, 1, 0
+a = 1
+o = 0.2
 
+# Training loop
+for i in range(len(x1)):
+    y = (x1[i] * w1) + (x2[i] * w2) + b
+    print("Value of y is", y)
 
-#decision tree classification
-import numpy as np
-import pandas as pd
-import math
-
-# Dataset
-df = pd.DataFrame({
-    'Outlook': ['Sunny', 'Sunny', 'Overcast', 'Rain', 'Rain', 'Rain', 'Overcast',
-                'Sunny', 'Sunny', 'Rain', 'Sunny', 'Overcast', 'Overcast', 'Rain'],
-    'Temperature': ['Hot', 'Hot', 'Hot', 'Mild', 'Cool', 'Cool', 'Cool',
-                    'Mild', 'Cool', 'Mild', 'Mild', 'Mild', 'Hot', 'Mild'],
-    'Humidity': ['High', 'High', 'High', 'High', 'Normal', 'Normal', 'Normal',
-                 'High', 'Normal', 'Normal', 'Normal', 'High', 'Normal', 'High'],
-    'Wind': ['Weak', 'Strong', 'Weak', 'Weak', 'Weak', 'Strong', 'Strong',
-             'Weak', 'Weak', 'Weak', 'Strong', 'Strong', 'Weak', 'Strong'],
-    'PlayTennis': ['No', 'No', 'Yes', 'Yes', 'Yes', 'No', 'Yes',
-                   'No', 'Yes', 'Yes', 'Yes', 'Yes', 'Yes', 'No']
-})
-
-# Entropy calculation
-def entropy(col):
-    vals, counts = np.unique(col, return_counts=True)
-    probs = counts / counts.sum()
-    return -np.sum(probs * np.log2(probs))
-
-# Information Gain
-def info_gain(data, feature, target='PlayTennis'):
-    total_entropy = entropy(data[target])
-    vals, counts = np.unique(data[feature], return_counts=True)
-    weighted = sum((counts[i]/counts.sum()) * entropy(data[data[feature]==vals[i]][target]) for i in range(len(vals)))
-    return total_entropy - weighted
-
-# ID3 Algorithm
-def ID3(data, features, target='PlayTennis'):
-    vals, counts = np.unique(data[target], return_counts=True)
-    if len(vals) == 1:
-        return vals[0]
-    if not features:
-        return vals[np.argmax(counts)]
-
-    gains = [info_gain(data, f, target) for f in features]
-    best = features[np.argmax(gains)]
-    tree = {best: {}}
-    
-    for val in np.unique(data[best]):
-        subset = data[data[best] == val]
-        sub_features = [f for f in features if f != best]
-        tree[best][val] = ID3(subset, sub_features, target)
-    
-    return tree
-
-# Prediction function
-def predict(tree, instance):
-    if not isinstance(tree, dict):
-        return tree  # Leaf node (final prediction)
-    
-    feature = list(tree.keys())[0]
-    value = instance[feature]
-    
-    if value in tree[feature]:
-        return predict(tree[feature][value], instance)
+    if y > o:
+        Y = 1
+    elif -o <= y <= o:
+        Y = 0
     else:
-        return None  # In case the value is not found in the tree
+        Y = -1
 
-# Build tree
-features = list(df.columns[:-1])
-tree = ID3(df, features)
+    print(f"The value of Y is {Y}")
 
-# Example prediction (instance: 'Outlook' = 'Sunny', 'Temperature' = 'Hot', 'Humidity' = 'High', 'Wind' = 'Weak')
-instance = {'Outlook': 'Sunny', 'Temperature': 'Hot', 'Humidity': 'High', 'Wind': 'Weak'}
-prediction = predict(tree, instance)
+    if t[i] != Y:
+        w1 = w1 + (a * t[i] * x1[i])
+        w2 = w2 + (a * t[i] * x2[i])
+        b = b + (a * t[i])
 
-print("Generated Decision Tree:\n", tree)
-print(f"Prediction for {instance}: {prediction}")
+    print(f"Updated weights: w1 = {w1}, w2 = {w2}, bias = {b}")
 
-#discretization
-import pandas as pd
+# Plotting points
+for i in range(len(x1)):
+    if t[i] == 1:
+        plt.scatter(x1[i], x2[i], color='blue', marker='o')
+    else:
+        plt.scatter(x1[i], x2[i], color='red', marker='x')
+
+# Decision boundary line: w1*x + w2*y + b = 0
+# y = -(w1/w2)*x - (b/w2)
 import numpy as np
-import matplotlib.pyplot as plt
-data = pd.Series([15, 22, 37, 45, 18, 30, 60, 25, 40, 28, 50, 55, 65])
-num_bins = 4
-min_value = data.min()
-max_value = data.max()
-bin_width = (max_value - min_value) / num_bins
-bins = [min_value + i * bin_width for i in range(num_bins + 1)]
-labels = [f"Bin {i+1}" for i in range(num_bins)]
-discretized_data = pd.cut(data, bins=bins, labels=labels, include_lowest=True)
-print("Original Data:")
-print(data)
-print("\nDiscretized Data:")
-print(discretized_data)
-plt.figure(figsize=(10, 6))
-plt.hist(data, bins=10, edgecolor='black', alpha=0.7, label='Original Data')
-plt.title('Histogram of Original Data')
-plt.xlabel('Value')
-plt.ylabel('Frequency')
-for bin_edge in bins:
-plt.axvline(x=bin_edge, color='red', linestyle='--', label="Bin Edge")
+x_vals = np.linspace(-2, 2, 100)
+y_vals = -(w1/w2)*x_vals - (b/w2)
+plt.plot(x_vals, y_vals, color='green', label='Decision Boundary')
+
+
+plt.xlabel('x1')
+plt.ylabel('x2')
+plt.title('Perceptron Learning Plot')
 plt.legend()
-plt.show()
-
-# fp growth
-from collections import defaultdict, Counter
-
-# Sample transactions
-transactions = [
-    ['I1', 'I2', 'I5'],
-    ['I2', 'I4'],
-    ['I2', 'I3'],
-    ['I1', 'I2', 'I4'],
-    ['I1', 'I3'],
-    ['I2', 'I3'],
-    ['I1', 'I3'],
-    ['I1', 'I2', 'I3', 'I5'],
-    ['I1', 'I2', 'I3'],
-]
-
-min_support = 2
-
-# Step 1: Count item frequency
-item_counter = Counter()
-for t in transactions:
-    for item in t:
-        item_counter[item] += 1
-
-# Step 2: Filter infrequent items
-freq_items = {item for item, count in item_counter.items() if count >= min_support}
-
-# Step 3: Sort items in transactions by frequency
-def clean_sort(t):
-    return sorted([i for i in t if i in freq_items], key=lambda x: item_counter[x], reverse=True)
-
-transactions = [clean_sort(t) for t in transactions if clean_sort(t)]
-
-# Step 4: Define FP-Tree Node
-class TreeNode:
-    def __init__(self, name, count, parent):
-        self.name = name
-        self.count = count
-        self.parent = parent
-        self.children = defaultdict(lambda: None)
-
-    def increment(self, count):
-        self.count += count
-
-# Step 5: Build the FP-Tree
-def build_tree(transactions):
-    root = TreeNode('root', 1, None)
-    for t in transactions:
-        current_node = root
-        for item in t:
-            if item in current_node.children:
-                current_node.children[item].increment(1)
-            else:
-                current_node.children[item] = TreeNode(item, 1, current_node)
-            current_node = current_node.children[item]
-    return root
-
-# Step 6: Display tree (optional, for understanding)
-def display_tree(node, indent=0):
-    print('  ' * indent + f"{node.name} ({node.count})")
-    for child in node.children.values():
-        if child:
-            display_tree(child, indent + 1)
-
-# Build and show the FP-tree
-fp_tree = build_tree(transactions)
-display_tree(fp_tree)
-
-#kmeans 2d
-import numpy as np
-import matplotlib.pyplot as plt
-
-# Sample 2D data points
-points = np.array([[2, 3], [3, 4], [8, 7], [9, 6]])
-centroids = np.array([[2, 3], [8, 7]])
-
-def euclidean(p1, p2):
-    return np.sqrt(np.sum((p1[0] - p2[0]) ** 2) + ((p1[1] - p2[1])) ** 2)
-
-# K-means iterations
-for _ in range(10):
-    labels = np.array([np.argmin([euclidean(p, c) for c in centroids]) for p in points])
-    centroids = np.array([points[labels == i].mean(axis=0) for i in range(2)])
-
-# Separate points by clusters
-cluster_0 = points[labels == 0]
-cluster_1 = points[labels == 1]
-
-# Plot clusters
-plt.scatter(cluster_0[:, 0], cluster_0[:, 1], color='blue', label='Cluster 0')
-plt.scatter(cluster_1[:, 0], cluster_1[:, 1], color='red', label='Cluster 1')
-
-# Plot centroids
-plt.scatter(centroids[:, 0], centroids[:, 1], color='black', marker='x', s=100, label='Centroids')
-
-plt.legend()
-plt.xlabel("X-axis")
-plt.ylabel("Y-axis")
-plt.title("K-Means Clustering (2 Clusters)")
-plt.show()
-
-
-#linear regression 
-import numpy as np
-import matplotlib.pyplot as plt
-
-# Sample data (x: input, y: output)
-x = np.array([1, 2, 3, 4, 5])
-y = np.array([2, 4, 5, 4, 5])
-
-# Mean values
-x_mean = np.mean(x)
-y_mean = np.mean(y)
-
-# Calculating coefficients
-numerator = np.sum((x - x_mean) * (y - y_mean))
-denominator = np.sum((x - x_mean) ** 2)
-slope = numerator / denominator
-intercept = y_mean - slope * x_mean
-
-print(f"Line Equation: y = {slope:.2f}x + {intercept:.2f}")
-
-# Predictions
-y_pred = slope * x + intercept
-
-# Plotting
-plt.scatter(x, y, color='blue', label='Actual')
-plt.plot(x, y_pred, color='red', label='Regression Line')
-plt.legend()
-plt.xlabel("x")
-plt.ylabel("y")
-plt.title("Linear Regression")
 plt.grid(True)
 plt.show()
 
 
-#naive baysean 
-import pandas as pd
+#delta
+def delta(a,w,x,t,d):
+    error = d - y
+    fnet = 0.5 * (1 - y**2)
+    d = error * fnet * w * a
+    wnew = w + d
 
-data = {
-    'Age': ['Young', 'Young', 'Middle-aged', 'Senior', 'Senior', 'Senior', 'Middle-aged', 'Young', 'Young', 'Senior', 'Young', 'Middle-aged', 'Middle-aged', 'Senior'],
-    'Income': ['High', 'High', 'High', 'Medium', 'Low', 'Low', 'Low', 'Medium', 'Low', 'Medium', 'Medium', 'Medium', 'High', 'Medium'],
-    'Student': ['No', 'No', 'No', 'No', 'Yes', 'Yes', 'Yes', 'No', 'Yes', 'Yes', 'Yes', 'No', 'Yes', 'No'],
-    'Credit Rating': ['Fair', 'Excellent', 'Fair', 'Fair', 'Fair', 'Excellent', 'Excellent', 'Fair', 'Fair', 'Fair', 'Excellent', 'Excellent', 'Fair', 'Excellent'],
-    'Buys Computer': ['No', 'No', 'Yes', 'Yes', 'Yes', 'No', 'Yes', 'No', 'Yes', 'Yes', 'Yes', 'Yes', 'Yes', 'No']
+    print(f"error = {error}")
+    print(f"fnet = {fnet}")
+    print(f"delta = {d}")
+
+    return wnew
+
+a=0.3
+w=0.4
+x=0.5
+y=0.5
+d=0.7
+
+for i in range(5):
+    w = delta(a,w,x,y,d)
+    print("updated weight = ", w)
+
+
+#a*
+import heapq
+
+def a_star(graph, h, start, goal):
+    open_list = [(0, start)]
+    g = {node: float('inf') for node in graph}
+    g[start] = 0
+    came_from = {}
+
+    while open_list:
+        _, current = heapq.heappop(open_list)
+        if current == goal:
+            path = []
+            while current in came_from:
+                path.append(current)
+                current = came_from[current]
+            path.append(start)
+            return path[::-1], g[goal]
+
+        for neighbor, cost in graph[current].items():
+            new_g = g[current] + cost
+            if new_g < g[neighbor]:
+                g[neighbor] = new_g
+                heapq.heappush(open_list, (new_g + h[neighbor], neighbor))
+                came_from[neighbor] = current
+
+    return None, float('inf')
+
+# Example
+graph = {
+    'A': {'B': 1, 'C': 2},
+    'B': {'D': 4, 'C': 3},
+    'C': {'D': 1},
+    'D': {}
 }
 
-df = pd.DataFrame(data)
-print(df.head())
-P_buys = df['Buys Computer'].value_counts(normalize=True)
-p_age = df['Age'].value_counts(normalize=True)print("maxiizing buys comp")
-p_buys_yes = P_buys['Yes']
-p_buys_no = P_buys['No']
-print("P(Yes):", p_buys_yes)
-print("P(No):", p_buys_no)
-print("maximizing age")
+h = {'A': 1, 'B': 0, 'C': 2, 'D': 2}
 
-p_age_young = p_age['Young']
-print("P(Young):", p_age_young)
-
-print("maximizing age")
-p_age_young_yes = len(df[(df['Age'] == 'Young') & (df['Buys Computer'] == 'Yes')]) / len(df[df['Buys Computer'] == 'Yes'])
-p_age_young_no = len(df[(df['Age'] == 'Young') & (df['Buys Computer'] == 'No')]) / len(df[df['Buys Computer'] == 'No'])
-
-print("P(Young|Yes):", p_age_young_yes)
-print("P(Young|No):", p_age_young_no)
-
-print("maximizing income")
-p_income_medium_yes = len(df[(df['Income'] == 'Medium') & (df['Buys Computer'] == 'Yes')]) / len(df[df['Buys Computer'] == 'Yes'])
-p_income_medium_no = len(df[(df['Income'] == 'Medium') & (df['Buys Computer'] == 'No')]) / len(df[df['Buys Computer'] == 'No'])
-print("P(Medium|Yes):", p_income_medium_yes)
-print("P(Medium|No):", p_income_medium_no)
-
-print("maximizing Student")
-p_student_yes_yes = len(df[(df['Student'] == 'Yes') & (df['Buys Computer'] == 'Yes')]) / len(df[df['Buys Computer'] == 'Yes'])
-p_student_yes_no = len(df[(df['Student'] == 'Yes') & (df['Buys Computer'] == 'No')]) / len(df[df['Buys Computer'] == 'No'])
-print("P(Student|Yes):", p_student_yes_yes)
-print("P(Student|No):", p_student_yes_no)
-
-print("maximizing Credit rating")
-p_credit_fair_yes = len(df[(df['Credit Rating'] == 'Fair') & (df['Buys Computer'] == 'Yes')]) / len(df[df['Buys Computer'] == 'Yes'])
-p_credit_fair_no = len(df[(df['Credit Rating'] == 'Fair') & (df['Buys Computer'] == 'No')]) / len(df[df['Buys Computer'] == 'No'])
-print("P(Student|Yes):", p_credit_fair_yes)
-print("P(Student|No):", p_credit_fair_no)
-
-print("Final Answer")
-p_x_buys_yes=p_age_young_yes * p_income_medium_yes * p_student_yes_yes * p_credit_fair_yes
-print("P(x|Buys):", p_x_buys_yes)
-p_x_buys_no=p_age_young_no * p_income_medium_no * p_student_yes_no * p_credit_fair_no
-print("P(x|Buys):", p_x_buys_no)
-
-p_x_buys = p_x_buys_yes * p_buys_yes
-p_x_notbuys = p_x_buys_no * p_buys_no
-print("P(x|Buys):", p_x_buys)
-print("P(x|NotBuys):", p_x_notbuys)
-
-if p_x_buys > p_x_notbuys:
-    print("The person will buy a computer.")
-else:
-    print("The person will not buy a computer.")
+path, cost = a_star(graph, h, 'A', 'D')
+print("Path:", path)
+print("Cost:", cost)
