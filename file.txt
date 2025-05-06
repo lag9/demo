@@ -198,3 +198,54 @@ h = {'A': 1, 'B': 0, 'C': 2, 'D': 2}
 path, cost = a_star(graph, h, 'A', 'D')
 print("Path:", path)
 print("Cost:", cost)
+
+
+#is prime
+% Base case: 0 and 1 are not prime.
+is_prime(0) :- false.
+is_prime(1) :- false.
+
+% Check if N is prime by ensuring it has no divisors other than 1 and itself.
+is_prime(N) :-
+    N > 1,
+    \+ has_factor(N, 2).
+
+% Helper predicate to check if N has any factors from 2 to sqrt(N).
+has_factor(N, F) :-
+    F * F =< N,     % Stop if F exceeds sqrt(N)
+    N mod F =:= 0.  % True if F divides N evenly
+has_factor(N, F) :-
+    F * F =< N,
+    F1 is F + 1,
+    has_factor(N, F1).
+
+% Example query:
+% ?- is_prime(17).
+% Output: true.
+
+
+#factorial
+factorial(0,1).
+factorial(X,result):-
+    X > 0,
+    X1= X - 1,
+    factorial(X1,demo)
+    result is X * demo
+
+#max in list
+% Base case: If there's only one element, it's the largest.
+max_list([X], X).
+
+% Recursive case: Compare the head with the maximum of the tail.
+max_list([H|T], Max) :-
+    max_list(T, TailMax),    % Find the largest in the tail
+    Max is max(H, TailMax).  % Compare head with tail max
+
+#min from list
+% Base case: If there's only one element, it is the smallest.
+min_list([X], X).
+
+% Recursive case: Compare the head with the minimum of the tail.
+min_list([H|T], Min) :-
+    min_list(T, TailMin),  % Find the smallest in the tail
+    Min is min(H, TailMin).  % Compare head with tail min
